@@ -1,0 +1,24 @@
+//Helper file for Rest Client extension in VsCode
+
+POST http://localhost:7071/api/ToEventGrid HTTP/1.1
+content-type: application/json
+
+[
+  {
+    "destinationId": "topic-webhook1",
+    "data": "1"
+  }
+]
+
+
+###
+
+POST http://localhost:7071/api/ToEventGrid HTTP/1.1
+content-type: application/json
+
+[
+   {
+     "destinationId": "topic-relay2",
+     "data": "2"
+   }
+]

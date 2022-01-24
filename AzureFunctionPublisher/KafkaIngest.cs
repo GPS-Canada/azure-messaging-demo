@@ -12,18 +12,6 @@ using Azure.Messaging.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using System.Linq;
 
-/*
-POST  http://localhost:7071/api/ToEventGrid
-[
-  {
-     "destinationId": "topic1",
-     "data": "1"
-   }
-]
-
-*/
-
-
 namespace AzureFunctionPublisher
 {
     public static class KafkaIngest

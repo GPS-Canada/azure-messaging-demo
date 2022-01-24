@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "AzureRelayConsumer (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (AzureRelayConsumer)",
+            "program": "${workspaceFolder}/AzureRelayConsumer/bin/Debug/net6.0/AzureRelayConsumer.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/AzureRelayConsumer",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "AzureServiceBusConsumer (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (AzureServiceBusConsumer)",
+            "program": "${workspaceFolder}/AzureServiceBusConsumer/bin/Debug/net6.0/AzureServiceBusConsumer.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/AzureServiceBusConsumer",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Attach to .NET Functions",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:azureFunctions.pickProcess}"
+        }
+    ]
+}
