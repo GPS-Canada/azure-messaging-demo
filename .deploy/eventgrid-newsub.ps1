@@ -37,6 +37,8 @@ $deadletterResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resource
 
 if ($webhookUrl -ne ""){
 
+	Write-Host "Creating webhook subscription"
+	
 	if($appendSubsriptionToWebhook) { $webhookUrl= "$webhookUrl/$subscriptionName"}
 
 	az eventgrid event-subscription create `
@@ -48,9 +50,12 @@ if ($webhookUrl -ne ""){
 		--max-delivery-attempts 2 --event-ttl 120 `
 		--output none
 
+	Write-Host "Webhook subscription created"
+
 }
 elseif ($relayName -ne ""){
 
+	Write-Output "Creating Event Grid Relay Subscription"
 	if ($topicName -eq "") {$topicName = "global"}
 
 	$relayEndpointId = az relay hyco create `
@@ -70,6 +75,7 @@ elseif ($relayName -ne ""){
 		--max-delivery-attempts 2 --event-ttl 120 `
 		--output none
 
+	Write-Output "Event Grid Relay Subscription Created."
 }
 else {
 	Write-Warning "No subscription created. Please provide either a webhook url or a relay name"

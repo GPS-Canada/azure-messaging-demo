@@ -1,8 +1,8 @@
 Param(  
-   [string][Parameter(Mandatory)]$appNamePrefix, # Prefix used for creating applications
-   [string][Parameter()]$location = "canadaCentral", # Prefix used for creating applications
-   [string][Parameter()]$subscriptionId, # Prefix used for creating applications
-   [switch][Parameter()]$usePremiumPlan # Prefix used for creating applications
+	[string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
+	[string][Parameter()]$Location = "canadaCentral", # Location of all resources
+	[string][Parameter()]$subscriptionId, # Id of Subscription to deploy to. If empty, defaults to the current account. Check 'az account show' to check.
+   	[switch][Parameter()]$usePremiumPlan # If set will deploy the functions in a EP1 plan instead of consumption
 )
 
 
@@ -139,13 +139,26 @@ if($null -eq $functionExist){
 			--query "{id:principalId}" `
 			--output tsv
 
+	#add a cors rule so we can run from portal
+	az functionapp cors add `
+		--resource-group $resourceGroup `
+		--name $functionAppName `
+		--allowed-origins https://ms.portal.azure.com  `
+		--output none
+
+	#weird bug in PowerShell, need to use this method otherwise the ) will not be added to the setting 
+	$EventGridDomainUrlValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Url)"' -f $keyVaultName
+	$EventGridDomainKeyValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Key)"' -f $keyVaultName
+	
+		
 	az functionapp config appsettings set `
-			--resource-group $resourceGroupName `
-			--name $functionAppName `
-			--output none `
-			--settings 	TopicPrefix=$appNamePrefix `
-						EventGrid-Domain-Url="@Microsoft.KeyVault(VaultName=$keyVaultName;SecretName=EventGrid--Domain-Url)" `
-						EventGrid-Domain-Key="@Microsoft.KeyVault(VaultName=$keyVaultName;SecretName=EventGrid--Domain-Key)"
+		--resource-group $resourceGroup `
+		--name $functionAppName `
+		--settings TopicPrefix=$appNamePrefix `
+				   EventGrid--Domain-Url=$EventGridDomainUrlValue `
+				   EventGrid--Domain-Key=$EventGridDomainKeyValue `
+				   WEBSITE_RUN_FROM_PACKAGE=1 `
+		--output none
 
 	Write-Host "-> Set KeyVault Access policy for function app"	
 	az keyvault set-policy `

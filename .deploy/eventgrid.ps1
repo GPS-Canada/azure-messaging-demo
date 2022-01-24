@@ -1,8 +1,16 @@
+#This script will deploy the basic infrastructure for the appliation
+# - Verify EventGrid is registered on the required subscription
+# - Creates a resource group
+# - Creates a KeyVault
+# - Creates an Azure Storage Account and save the connection string in the KeyVault
+# - Creates an Azure Relay Namespace along with a Listener and Sender Shared Access Policy that are saved in the KeyVault
+# - Creates an Event Grid Domain and a global subscription for the domain into a storage queue (for monitoring events)
+
 Param(  
-   [string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
-   [string][Parameter()]$Location = "canadaCentral", # Prefix used for creating applications
-   [string][Parameter()]$subscriptionId # Prefix used for creating applications
-)
+	[string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
+	[string][Parameter()]$Location = "canadaCentral", # Location of all resources
+	[string][Parameter()]$subscriptionId # Id of Subscription to deploy to. If empty, defaults to the current account. Check 'az account show' to check.
+) 
 
 
 ### Subscription Selection
@@ -20,9 +28,7 @@ $storageName = ($AppNamePrefix + "storage") -replace "[^a-z0-9]",""
 $keyVaultName = "$AppNamePrefix-kv"
 $storageQueueName = "eventgridsink"
 $storageContainerName = "eventgriddeadletter"
-
 $relayName = "$AppNamePrefix-relay"
-
 $domainName = "$AppNamePrefix-domain"
 $subscriptionGlobal = "sub-global"
 $domainResourceId ="/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.EventGrid/domains/$domainName"
@@ -59,7 +65,8 @@ if ($null -eq $kvExists){
 	az keyvault create `
 		--resource-group $resourceGroup `
 		--location $location `
-		--name $keyVaultName
+		--name $keyVaultName `
+		--output none
 	Write-Output "Resource Group '$resourceGroup' created"
 }
 else {
@@ -187,7 +194,7 @@ if ($null -eq $eventGridDomainExists){
 			--resource-group $resourceGroup `
 			--location $location `
 			--name $domainName `
-			--query "{url:endpoint,key:key1}" `
+			--query "{url:endpoint}" `
 			--output tsv
 	
 	Write-Output "Domain '$domainName' created"

@@ -26,9 +26,6 @@ namespace AzureFunctionPublisher
             var data = JsonConvert.DeserializeObject<List<EventDTO>>(requestBody);
             var topicPrefix = Environment.GetEnvironmentVariable("TopicPrefix", EnvironmentVariableTarget.Process);
 
-            var key = Environment.GetEnvironmentVariable("EventGrid-Domain-Key", EnvironmentVariableTarget.Process);
-            log.LogDebug(key);
-
             foreach (var item in data)
             {
                 var newEvent = new EventGridEvent("subject", "event-type", "v1.0", item)
