@@ -5,8 +5,32 @@ content-type: application/json
 
 [
   {
-    "destinationId": "topic-webhook1",
+    "destinationId": "campus-1",
     "data": "1"
+  },
+  {
+    "destinationId": "campus-3",
+    "data": "3"
+  }
+]
+
+### 
+
+POST http://localhost:7071/api/ToServiceBus HTTP/1.1
+content-type: application/json
+
+[
+  {
+    "destinationId": "campus-1",
+    "data": "1"
+  },
+  {
+    "destinationId": "campus-2",
+    "data": "2"
+  },
+  {
+    "destinationId": "campus-1",
+    "data": "3"
   }
 ]
 
@@ -18,7 +42,11 @@ content-type: application/json
 
 [
    {
-     "destinationId": "topic-relay2",
+     "destinationId": "campus-1",
+     "data": "2"
+   },
+   {
+     "destinationId": "campus-2",
      "data": "2"
    }
 ]

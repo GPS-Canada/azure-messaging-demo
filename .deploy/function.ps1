@@ -1,8 +1,10 @@
 Param(  
 	[string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
+	[string][Parameter()]$serviceBusTopicName, # Name of the Service bus topic to connect to
+	[switch][Parameter()]$usePremiumPlan, # If set will deploy the functions in a EP1 plan instead of consumption
+
 	[string][Parameter()]$Location = "canadaCentral", # Location of all resources
-	[string][Parameter()]$subscriptionId, # Id of Subscription to deploy to. If empty, defaults to the current account. Check 'az account show' to check.
-   	[switch][Parameter()]$usePremiumPlan # If set will deploy the functions in a EP1 plan instead of consumption
+	[string][Parameter()]$subscriptionId # Id of Subscription to deploy to. If empty, defaults to the current account. Check 'az account show' to check.
 )
 
 
@@ -115,61 +117,66 @@ Write-Host "Creating Azure Functions '$functionAppName'"
 #   --sku $functionPlanSKU `
 #   --output none
 
-$functionExist = az functionapp list --query "[?name=='$functionAppName']" --output tsv
-if($null -eq $functionExist){
-	#--plan $functionPlanName `
-	Write-Host "-> Creating Azure Functions '$functionAppName'"	
-	az functionapp create `
-		--resource-group $resourceGroup `
-		--name $functionAppName `
-		--consumption-plan-location $location `
-		--storage-account $storageName `
-		--assign-identity `
-		--functions-version 4 `
-		--os-type Windows `
-		--runtime dotnet `
-		--app-insights $functionInsights `
-		--app-insights-key $appInsightsKey `
-		--output none
-
-	$functionIdentity = 
-		az webapp identity show `
-			--resource-group $resourceGroup `
-			--name $functionAppName `
-			--query "{id:principalId}" `
-			--output tsv
-
-	#add a cors rule so we can run from portal
-	az functionapp cors add `
-		--resource-group $resourceGroup `
-		--name $functionAppName `
-		--allowed-origins https://ms.portal.azure.com  `
-		--output none
-
-	#weird bug in PowerShell, need to use this method otherwise the ) will not be added to the setting 
-	$EventGridDomainUrlValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Url)"' -f $keyVaultName
-	$EventGridDomainKeyValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Key)"' -f $keyVaultName
 	
+Write-Host "-> Creating Azure Functions '$functionAppName'"	
+#--plan $functionPlanName `
+az functionapp create `
+	--resource-group $resourceGroup `
+	--name $functionAppName `
+	--consumption-plan-location $location `
+	--storage-account $storageName `
+	--assign-identity `
+	--functions-version 4 `
+	--os-type Windows `
+	--runtime dotnet `
+	--app-insights $functionInsights `
+	--app-insights-key $appInsightsKey `
+	--output none
+
+$functionIdentity = 
+	az webapp identity show `
+		--resource-group $resourceGroup `
+		--name $functionAppName `
+		--query "{id:principalId}" `
+		--output tsv
+
+#add a cors rule so we can run from portal
+az functionapp cors add `
+	--resource-group $resourceGroup `
+	--name $functionAppName `
+	--allowed-origins https://ms.portal.azure.com  `
+	--output none
+
+#weird bug in PowerShell, need to use this method otherwise the ) will not be added to the setting 
+$EventGridDomainUrlValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Url)"' -f $keyVaultName
+$EventGridDomainKeyValue='"@Microsoft.KeyVault(VaultName={0};SecretName=EventGrid--Domain-Key)"' -f $keyVaultName
 		
+az functionapp config appsettings set `
+	--resource-group $resourceGroup `
+	--name $functionAppName `
+	--settings EventGrid--Domain-Url=$EventGridDomainUrlValue `
+				EventGrid--Domain-Key=$EventGridDomainKeyValue `
+				WEBSITE_RUN_FROM_PACKAGE=1 `
+	--output none
+
+if ($serviceBusTopicName -ne "")
+{
+	$ServiceBusConnectionStringValue='"@Microsoft.KeyVault(VaultName={0};SecretName=ServiceBus--{1}-Send-ConnectionString)"' -f $keyVaultName, $serviceBusTopicName
+	
 	az functionapp config appsettings set `
 		--resource-group $resourceGroup `
 		--name $functionAppName `
-		--settings TopicPrefix=$appNamePrefix `
-				   EventGrid--Domain-Url=$EventGridDomainUrlValue `
-				   EventGrid--Domain-Key=$EventGridDomainKeyValue `
-				   WEBSITE_RUN_FROM_PACKAGE=1 `
+		--settings 	ServiceBus--TopicName=$serviceBusTopicName `
+					ServiceBus--$serviceBusTopicName-Send-ConnectionString=$ServiceBusConnectionStringValue `
 		--output none
-
-	Write-Host "-> Set KeyVault Access policy for function app"	
-	az keyvault set-policy `
-		--resource-group $resourceGroup `
-		--name $keyVaultName `
-		--object-id $functionIdentity `
-		--secret-permissions get list `
-		--output none
-
-	Write-Host "Azure Functions '$functionAppName' created."	
 }
-else {
-	Write-Output "Azure Functions '$functionAppName' already exists. Skipping..."
-}
+
+Write-Host "-> Set KeyVault Access policy for function app"	
+az keyvault set-policy `
+	--resource-group $resourceGroup `
+	--name $keyVaultName `
+	--object-id $functionIdentity `
+	--secret-permissions get list `
+	--output none
+
+Write-Host "Azure Functions '$functionAppName' created."	

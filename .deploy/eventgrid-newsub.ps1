@@ -1,8 +1,10 @@
 Param(  
    [string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
+   [string][Parameter()]$domainName, #Event Grid domain name
    [string][Parameter()]$topicName, #Topic name to create subscription for. If empty, subscription will be created for the entire domain   
-
-   [string][Parameter()]$relayName, #Relay for subscription. If empty, must provide public webhool url
+   
+   [switch][Parameter()]$useRelay,
+   
    [string][Parameter()]$webhookUrl, #Public webhook url for subscription. If empty, must provide relay name
    [switch][Parameter()]$appendSubscriptionToWebhook, # Subscription Id to be appended to the webhook url
    [string][Parameter()]$subscriptionId 
@@ -21,8 +23,8 @@ $resourceGroup = $AppNamePrefix
 $storageName = ($AppNamePrefix + "storage") -replace "[^a-z0-9]",""
 
 $storageContainerName = "eventgriddeadletter"
-$domainName = "$AppNamePrefix-domain"
-$topicName = "$AppNamePrefix-$topicName"
+$domainName = "$domainName-eg-domain"
+$relayName = "$domainName-relay"
 $subscriptionName = "$topicName-sub1"
 
 $subscriptionResourceId = 
@@ -34,13 +36,12 @@ $subscriptionResourceId =
 $deadletterResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Storage/storageAccounts/$storageName/blobServices/default/containers/$storageContainerName"
 
 
-
 if ($webhookUrl -ne ""){
 
 	Write-Host "Creating webhook subscription"
 	
 	if($appendSubsriptionToWebhook) { $webhookUrl= "$webhookUrl/$subscriptionName"}
-
+	
 	az eventgrid event-subscription create `
 		--name $subscriptionName `
 		--source-resource-id $subscriptionResourceId `
@@ -53,7 +54,7 @@ if ($webhookUrl -ne ""){
 	Write-Host "Webhook subscription created"
 
 }
-elseif ($relayName -ne ""){
+elseif ($useRelay -eq $true){
 
 	Write-Output "Creating Event Grid Relay Subscription"
 	if ($topicName -eq "") {$topicName = "global"}

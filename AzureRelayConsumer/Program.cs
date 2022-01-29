@@ -2,9 +2,9 @@
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Relay;
 
-var keyVaultUrl = "https://demo-eg-pubsub-kv.vault.azure.net/";
+var keyVaultUrl = "https://demo-pubsub-1-kv.vault.azure.net/";
 var secretName = "Relay--Listen-ConnectionString";
-var relayPath = "demo-eg-pubsub-relay1";
+var relayPath = "campus-1";
 
 
 var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());

@@ -8,6 +8,7 @@
 
 Param(  
 	[string][Parameter(Mandatory)]$AppNamePrefix, # Prefix used for creating applications
+	[string][Parameter(Mandatory)]$domainName, # Topic to be created
 	[string][Parameter()]$Location = "canadaCentral", # Location of all resources
 	[string][Parameter()]$subscriptionId # Id of Subscription to deploy to. If empty, defaults to the current account. Check 'az account show' to check.
 ) 
@@ -26,10 +27,12 @@ else {
 $resourceGroup = $AppNamePrefix
 $storageName = ($AppNamePrefix + "storage") -replace "[^a-z0-9]",""
 $keyVaultName = "$AppNamePrefix-kv"
+
 $storageQueueName = "eventgridsink"
 $storageContainerName = "eventgriddeadletter"
-$relayName = "$AppNamePrefix-relay"
-$domainName = "$AppNamePrefix-domain"
+
+$domainName = "$domainName-eg-domain"
+$relayName = "$domainName-relay"
 $subscriptionGlobal = "sub-global"
 $domainResourceId ="/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.EventGrid/domains/$domainName"
 $eventSinkResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Storage/storageAccounts/$storageName/queueservices/default/queues/$storageQueueName"
